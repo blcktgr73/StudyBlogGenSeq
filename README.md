@@ -78,22 +78,29 @@ StudyBlogGenSeq/
 - [x] UI 컴포넌트 라이브러리 (shadcn/ui)
 - [x] 기본 레이아웃 (Header, Footer)
 - [x] 핵심 페이지 (Home, Explore, Tags, Write)
-- [ ] Supabase 데이터베이스 구축
-- [ ] 기본 인증 시스템
 
-### Phase 2: AI Editor Core 🚧 (진행 중)
+### Phase 2: AI Editor Core ✅ (완료)
 - [x] AI 서비스 레이어 구축
 - [x] Mock AI 서비스 (API 없이 테스트 가능)
 - [x] 자동 태그 생성 (16개 키워드 감지)
 - [x] 실시간 문장 개선 기능
 - [x] 템플릿 시스템 (3가지 템플릿)
 - [x] API Routes (/api/ai/improve, /api/ai/tags)
-- [ ] 실제 OpenAI/Claude API 통합
+- [x] 실제 OpenAI/Claude API 통합 (GPT-4o-mini, Claude 3.5 Sonnet)
+- [x] Multi-provider AI 아키텍처 (Factory Pattern)
 - [ ] Tiptap 리치 에디터 통합
 - [ ] 실시간 스트리밍 응답
 
-### Phase 3: Community Features (예정)
-- [ ] 게시물 CRUD
+### Phase 3: Database & Community Features 🚧 (진행 중 - 90%)
+- [x] Supabase 데이터베이스 스키마 설계 (7 테이블)
+- [x] 마이그레이션 파일 작성
+- [x] LocalStorage 기반 게시물 관리 (임시)
+- [x] 글쓰기 → 발행 → 탐색 완전한 워크플로우
+- [x] 게시물 CRUD (저장/발행)
+- [x] 자동 슬러그 생성 (한글+영문)
+- [x] 자동 요약 생성 (150자)
+- [ ] Supabase 실제 연결
+- [ ] 사용자 인증 (OAuth)
 - [ ] 댓글 시스템
 - [ ] 좋아요/북마크
 - [ ] 검색 기능
@@ -134,20 +141,32 @@ npm run dev
    - 테스트 문구 1: "저는 파이썬을 배웠어요"
    - 테스트 문구 2: "성능이 좋아졌어요"
 5. **AI 기능 체험**:
-   - 2초 후 자동으로 태그 생성됨
-   - "AI 개선 제안받기" 버튼 클릭하여 문장 개선안 확인
+   - 2초 후 자동으로 태그 생성됨 (실제 GPT-4o-mini 사용)
+   - "AI 개선 제안받기" 버튼 클릭하여 문장 개선안 확인 (~8초)
    - 제안을 "적용" 또는 "무시" 선택 가능
+6. **게시물 저장/발행**:
+   - "💾 임시저장" - 초안으로 저장
+   - "🚀 발행하기" - 즉시 발행 후 Explore 페이지로 이동
+7. **발행된 게시물 확인**: http://localhost:3000/explore
 
-### 환경 변수 (선택 사항)
+### 환경 변수 설정
 
-현재는 Mock AI 서비스를 사용하므로 API 키 없이도 작동합니다.
-
-실제 AI API를 사용하려면:
+**실제 AI API 사용 (필수)**:
 ```bash
 cp .env.example .env.local
 # .env.local 파일에 API 키 입력
-OPENAI_API_KEY=your_key_here
-ANTHROPIC_API_KEY=your_key_here
+AI_PROVIDER=openai  # 또는 anthropic, mock
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+# 또는 Claude 사용 시
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+```
+
+**Supabase 설정 (선택 사항 - 현재는 LocalStorage 사용)**:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ## 📊 성공 지표 (KPI)
