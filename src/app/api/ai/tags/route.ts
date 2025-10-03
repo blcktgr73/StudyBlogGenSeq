@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockAI } from "@/lib/ai/mock-service";
+import { getAIService } from "@/lib/ai/service-factory";
 import type { TagGenerationRequest } from "@/lib/ai/types";
 
 export async function POST(request: NextRequest) {
@@ -13,10 +13,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mock AI 서비스 사용
-    const tags = await mockAI.generateTags(body);
+    // Get configured AI service (OpenAI, Anthropic, or Mock)
+    const aiService = getAIService();
+    const tags = await aiService.suggestTags(
+      body.title || "",
+      body.content || ""
+    );
 
-    return NextResponse.json({ tags });
+    // Return top 5 tags
+    const topTags = tags
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, 5)
+      .map((t) => t.tag);
+
+    return NextResponse.json({ tags: topTags });
   } catch (error) {
     console.error("AI tags error:", error);
     return NextResponse.json(

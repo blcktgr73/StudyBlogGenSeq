@@ -9,7 +9,7 @@ export interface TextImprovementRequest {
 export interface TextImprovementResponse {
   improved: string;
   reason: string;
-  type: 'clarity' | 'grammar' | 'style' | 'conciseness';
+  type: 'clarity' | 'detail' | 'structure' | 'grammar' | 'style' | 'conciseness';
 }
 
 export interface TagGenerationRequest {
@@ -42,10 +42,26 @@ export interface SummarizationResponse {
   keyPoints: string[];
 }
 
-export type AIProvider = 'openai' | 'claude' | 'mock';
+export type AIProvider = 'openai' | 'anthropic' | 'mock';
 
 export interface AIConfig {
   provider: AIProvider;
   apiKey?: string;
   model?: string;
+}
+
+/**
+ * AI Service Interface
+ * All AI providers (OpenAI, Anthropic, Mock) must implement this interface
+ */
+export interface AIService {
+  /**
+   * Improve text clarity, detail, and structure
+   */
+  improveText(request: TextImprovementRequest): Promise<TextImprovementResponse>;
+
+  /**
+   * Suggest relevant tags based on title and content
+   */
+  suggestTags(title: string, content: string): Promise<TagSuggestion[]>;
 }

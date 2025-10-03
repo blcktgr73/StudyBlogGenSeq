@@ -1,14 +1,10 @@
 // Mock AI 서비스 (API 키 없이도 테스트 가능)
 
 import type {
+  AIService,
   TextImprovementRequest,
   TextImprovementResponse,
-  TagGenerationRequest,
   TagSuggestion,
-  TitleSuggestionRequest,
-  TitleSuggestion,
-  SummarizationRequest,
-  SummarizationResponse,
 } from "./types";
 
 // 시뮬레이션 지연 시간
@@ -16,7 +12,7 @@ const MOCK_DELAY = 800;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export class MockAIService {
+export class MockAIService implements AIService {
   async improveText(
     request: TextImprovementRequest
   ): Promise<TextImprovementResponse> {
@@ -54,10 +50,9 @@ export class MockAIService {
     };
   }
 
-  async generateTags(request: TagGenerationRequest): Promise<TagSuggestion[]> {
+  async suggestTags(title: string, content: string): Promise<TagSuggestion[]> {
     await sleep(MOCK_DELAY);
 
-    const { title, content } = request;
     const text = `${title} ${content}`.toLowerCase();
 
     const suggestions: TagSuggestion[] = [];
@@ -96,50 +91,6 @@ export class MockAIService {
 
     // 상위 5개만 반환
     return suggestions.slice(0, 5);
-  }
-
-  async suggestTitle(
-    request: TitleSuggestionRequest
-  ): Promise<TitleSuggestion[]> {
-    await sleep(MOCK_DELAY);
-
-    const suggestions: TitleSuggestion[] = [
-      {
-        title: "AI를 활용한 학습 경험 공유 플랫폼 개발기",
-        reason: "프로젝트의 목적과 과정을 명확히 전달합니다",
-      },
-      {
-        title: "Next.js로 만드는 AI 글쓰기 도우미",
-        reason: "기술 스택과 핵심 기능을 강조합니다",
-      },
-      {
-        title: "LLM API를 실전 프로젝트에 적용한 경험",
-        reason: "학습한 내용의 실용성을 강조합니다",
-      },
-    ];
-
-    return suggestions;
-  }
-
-  async summarize(
-    request: SummarizationRequest
-  ): Promise<SummarizationResponse> {
-    await sleep(MOCK_DELAY);
-
-    const { content } = request;
-
-    // 간단한 요약 시뮬레이션
-    const sentences = content.split(/[.!?]\s+/).filter((s) => s.length > 0);
-    const firstSentences = sentences.slice(0, 2).join(". ") + ".";
-
-    return {
-      summary: firstSentences || "작성된 내용을 바탕으로 요약을 생성합니다.",
-      keyPoints: [
-        "AI를 활용한 글쓰기 도우미 기능",
-        "실시간 문장 개선 제안",
-        "자동 태그 생성 및 구조화 지원",
-      ],
-    };
   }
 }
 

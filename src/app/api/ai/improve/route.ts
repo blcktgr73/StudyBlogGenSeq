@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mockAI } from "@/lib/ai/mock-service";
+import { getAIService } from "@/lib/ai/service-factory";
 import type { TextImprovementRequest } from "@/lib/ai/types";
 
 export async function POST(request: NextRequest) {
@@ -13,8 +13,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mock AI 서비스 사용 (나중에 실제 API로 교체)
-    const result = await mockAI.improveText(body);
+    // Get configured AI service (OpenAI, Anthropic, or Mock)
+    const aiService = getAIService();
+    const result = await aiService.improveText(body);
 
     return NextResponse.json(result);
   } catch (error) {

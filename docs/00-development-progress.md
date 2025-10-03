@@ -270,6 +270,165 @@ Error: Cannot find module 'autoprefixer'
   - 명확한 시각적 피드백
   - 테스트 문구 플레이스홀더
 
+### Issue #4: Write 페이지 텍스트 시인성 문제
+**문제**: 흰색 배경에 회색 글씨로 인한 가독성 저하
+```tsx
+// 기존: 기본 회색 텍스트
+<input className="..." />
+```
+
+**해결**: Tailwind 테마 클래스 적용
+- `text-foreground`: 테마에 맞는 전경색 사용
+- `bg-background`: 명시적 배경색 지정
+- `placeholder:text-muted-foreground`: 플레이스홀더 색상
+- 결과: 다크/라이트 모드 모두 가독성 향상
+
+---
+
+## 📅 2025-10-03 (세션 3) - AI Provider 통합
+
+### ✅ Real AI 서비스 통합 완료
+
+#### 1. AI Service Architecture 구축
+
+**핵심 파일**:
+- `src/lib/ai/types.ts` - AIService 인터페이스 정의
+- `src/lib/ai/service-factory.ts` - Provider 선택 Factory Pattern
+- `src/lib/ai/openai-service.ts` - OpenAI GPT-4o-mini 통합
+- `src/lib/ai/anthropic-service.ts` - Claude 3.5 Sonnet 통합
+- `src/lib/ai/mock-service.ts` - Mock 서비스 (API 키 불필요)
+
+**AIService 인터페이스**:
+```typescript
+interface AIService {
+  improveText(request: TextImprovementRequest): Promise<TextImprovementResponse>;
+  suggestTags(title: string, content: string): Promise<TagSuggestion[]>;
+}
+```
+
+**Factory Pattern**:
+```typescript
+// 환경변수에 따라 자동 선택
+const aiService = getAIService();
+// AI_PROVIDER=openai → OpenAIService
+// AI_PROVIDER=anthropic → AnthropicService
+// AI_PROVIDER=mock → MockAIService (기본값)
+```
+
+#### 2. 환경 설정
+
+**.env.local 생성**:
+```env
+AI_PROVIDER=mock  # openai, anthropic, mock
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
+ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+```
+
+**Fallback 전략**:
+- API 키가 없으면 자동으로 Mock 서비스 사용
+- 개발 단계에서 API 비용 절감
+- 프로덕션 배포 전 실제 AI 테스트 가능
+
+#### 3. OpenAI 서비스 구현
+
+**주요 기능**:
+- GPT-4o-mini 모델 사용 (비용 효율적: $0.15/1M tokens)
+- JSON mode로 태그 생성 (구조화된 응답)
+- 3가지 톤 지원: professional, casual, academic
+- Temperature 0.7로 창의성과 일관성 균형
+
+**텍스트 개선 프롬프트**:
+- "구체적인 세부사항 추가 (기간, 기술, 메트릭)"
+- "명확하고 구체적인 언어 사용"
+- "원래 의도 유지"
+- "한국어로 작성"
+
+#### 4. Anthropic (Claude) 서비스 구현
+
+**주요 기능**:
+- Claude 3.5 Sonnet 모델 ($3.00/1M tokens)
+- 한국어 품질 우수
+- 긴 컨텍스트 처리 능력
+- System prompt와 Messages API 활용
+
+**프롬프트 전략**:
+- OpenAI와 동일한 가이드라인 사용
+- 일관된 응답 포맷 유지
+- JSON 파싱으로 구조화된 태그 추출
+
+#### 5. API Routes 업데이트
+
+**Before**:
+```typescript
+import { mockAI } from '@/lib/ai/mock-service';
+const result = await mockAI.improveText(body);
+```
+
+**After**:
+```typescript
+import { getAIService } from '@/lib/ai/service-factory';
+const aiService = getAIService(); // Factory가 자동 선택
+const result = await aiService.improveText(body);
+```
+
+**개선 사항**:
+- Mock에서 Real AI로 심리스 전환
+- Provider 변경 시 코드 수정 불필요
+- 에러 처리 및 검증 유지
+
+#### 6. 문서화
+
+**docs/06-ai-integration-guide.md** 생성:
+- 환경 설정 가이드
+- Provider별 특징 비교 테이블
+- API 사용법 및 cURL 예제
+- 비용 최적화 전략
+- 보안 가이드라인
+- 에러 처리 및 Fallback 전략
+
+**주요 내용**:
+- OpenAI vs Anthropic 비교
+- 모델별 가격 정보
+- Debouncing으로 API 호출 최적화
+- 토큰 사용량 제한 (300-500 토큰)
+
+#### 7. 의존성 추가
+
+```bash
+npm install openai @anthropic-ai/sdk
+```
+
+**설치된 패키지**:
+- `openai`: ^6.1.0 - OpenAI SDK
+- `@anthropic-ai/sdk`: ^0.65.0 - Anthropic SDK
+- 총 5개 패키지 추가
+
+#### 8. 테스트 결과
+
+**Mock 서비스 테스트** (AI_PROVIDER=mock):
+```bash
+# 텍스트 개선
+curl -X POST http://localhost:3008/api/ai/improve \
+  -d '{"text":"저는 파이썬을 배웠어요"}'
+# ✅ 성공: 800ms 후 개선안 반환
+
+# 태그 생성
+curl -X POST http://localhost:3008/api/ai/tags \
+  -d '{"title":"Next.js로 AI 블로그 만들기","content":"..."}'
+# ✅ 성공: ["Next.js", "React", "JavaScript", "AI"]
+```
+
+**실제 프로덕션 사용 시**:
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+```
+→ 자동으로 GPT-4o-mini 사용
+
+---
+
 ## 📊 현재 상태 (Updated)
 
 ### 완료된 작업
@@ -280,15 +439,16 @@ Error: Cannot find module 'autoprefixer'
 - ✅ UI 컴포넌트 라이브러리 (100%)
 - ✅ 핵심 페이지 (Home, Explore, Tags, Write) (100%)
 - ✅ **AI 에디터 프로토타입 (100%)**
+- ✅ **Real AI Provider 통합 (100%)**
 
 ### 진행 중인 작업
 - 없음
 
 ### 다음 단계
-- ⏭️ 실제 OpenAI/Claude API 통합
 - ⏭️ Supabase 데이터베이스 설정
-- ⏭️ 인증 시스템 구축
+- ⏭️ 인증 시스템 구축 (소셜 로그인)
 - ⏭️ 게시물 CRUD 구현
+- ⏭️ Tiptap Rich Text Editor 통합
 
 ## 🎯 Phase 2: AI Editor Core 진행률
 
@@ -298,14 +458,18 @@ Error: Cannot find module 'autoprefixer'
 |------|------|--------|
 | AI 서비스 레이어 | ✅ 완료 | 100% |
 | Mock AI 서비스 | ✅ 완료 | 100% |
+| OpenAI 서비스 통합 | ✅ 완료 | 100% |
+| Anthropic 서비스 통합 | ✅ 완료 | 100% |
+| Service Factory Pattern | ✅ 완료 | 100% |
 | 자동 태그 생성 | ✅ 완료 | 100% |
 | 실시간 문장 개선 | ✅ 완료 | 100% |
 | 템플릿 시스템 | ✅ 완료 | 100% |
 | API Routes | ✅ 완료 | 100% |
-| 실제 LLM API 통합 | ⏸️ 대기 | 0% |
+| 환경 설정 시스템 | ✅ 완료 | 100% |
+| AI 통합 문서화 | ✅ 완료 | 100% |
 | Tiptap 에디터 | ⏸️ 대기 | 0% |
 
-**전체 진행률**: ~75%
+**전체 진행률**: ~92%
 
 ## 📝 주요 결정사항 (Updated)
 
@@ -315,15 +479,34 @@ Error: Cannot find module 'autoprefixer'
    - Mock AI로 UX 검증 후 실제 API 통합
    - 개발 속도 향상, 비용 절감
 
-2. **타입 안정성**
+2. **Factory Pattern 채택**
+   - 환경변수 기반 Provider 자동 선택
+   - Singleton 패턴으로 인스턴스 재사용
+   - 코드 수정 없이 Provider 전환 가능
+   - Fallback 전략: API 키 없으면 자동으로 Mock 사용
+
+3. **타입 안정성**
    - TypeScript 인터페이스로 AI 요청/응답 정의
+   - AIService 인터페이스로 모든 Provider 통일
    - 컴파일 타임 에러 방지
    - IDE 자동완성 지원
 
-3. **비동기 UX**
+4. **비동기 UX**
    - 모든 AI 작업은 비차단 (non-blocking)
    - 로딩 스피너로 명확한 피드백
-   - Debounce로 불필요한 API 호출 방지
+   - Debounce로 불필요한 API 호출 방지 (2초)
+
+5. **Multi-Provider 전략**
+   - OpenAI: 비용 효율적 (GPT-4o-mini: $0.15/1M tokens)
+   - Anthropic: 고품질 한국어 (Claude 3.5: $3.00/1M tokens)
+   - Mock: 개발/테스트용 (무료)
+   - Provider별 장단점 문서화
+
+6. **비용 최적화**
+   - max_tokens 제한 (300-500 토큰)
+   - Temperature 조정 (0.5-0.7)
+   - Debouncing으로 API 호출 최소화
+   - 캐싱 시스템 (추후 구현 예정)
 
 ## 🚧 발생한 이슈 및 해결 (Updated)
 
