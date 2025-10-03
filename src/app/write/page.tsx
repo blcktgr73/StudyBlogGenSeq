@@ -58,7 +58,11 @@ export default function WritePage() {
 
       if (response.ok) {
         const data = await response.json();
-        setSuggestedTags(data.tags.map((t: any) => t.tag));
+        // Handle both array and object responses
+        const tags = Array.isArray(data.tags)
+          ? data.tags
+          : data.tags.map((t: any) => t.tag || t);
+        setSuggestedTags(tags);
       }
     } catch (error) {
       console.error("Failed to generate tags:", error);
