@@ -51,39 +51,54 @@ GPTers와 같은 AI 학습 커뮤니티에서 **작성 과정 자체에 AI를 �
 ```
 StudyBlogGenSeq/
 ├── docs/                      # 프로젝트 문서
+│   ├── 00-development-progress.md  # 개발 진행 상황
 │   ├── 01-PRD.md             # 제품 요구사항 정의서
 │   ├── 02-tech-stack.md      # 기술 스택 상세
 │   ├── 03-database-schema.md # DB 스키마 설계
 │   └── 04-ai-editor-features.md # AI 에디터 기능 명세
-├── app/                       # Next.js App Router (예정)
-├── components/                # React 컴포넌트 (예정)
-├── lib/                       # 유틸리티 & API (예정)
+├── src/
+│   ├── app/                  # Next.js App Router
+│   │   ├── api/ai/          # AI API Routes
+│   │   ├── explore/         # 둘러보기 페이지
+│   │   ├── tags/            # 태그 페이지
+│   │   └── write/           # 글쓰기 페이지 (AI 에디터)
+│   ├── components/
+│   │   ├── ui/              # shadcn/ui 컴포넌트
+│   │   └── layout/          # 레이아웃 컴포넌트
+│   └── lib/
+│       └── ai/              # AI 서비스 레이어
 └── README.md
 ```
 
 ## 📋 개발 로드맵
 
-### Phase 1: Foundation (4주)
+### Phase 1: Foundation ✅ (완료)
 - [x] PRD 및 기술 문서 작성
-- [ ] 프로젝트 초기 설정
+- [x] 프로젝트 초기 설정 (Next.js 15 + TypeScript)
+- [x] UI 컴포넌트 라이브러리 (shadcn/ui)
+- [x] 기본 레이아웃 (Header, Footer)
+- [x] 핵심 페이지 (Home, Explore, Tags, Write)
 - [ ] Supabase 데이터베이스 구축
 - [ ] 기본 인증 시스템
-- [ ] UI 컴포넌트 라이브러리
 
-### Phase 2: AI Editor Core (4주)
-- [ ] Tiptap 에디터 통합
-- [ ] LLM API 연동
-- [ ] 실시간 문장 개선 기능
-- [ ] 템플릿 시스템
-- [ ] 자동 태그 생성
+### Phase 2: AI Editor Core 🚧 (진행 중)
+- [x] AI 서비스 레이어 구축
+- [x] Mock AI 서비스 (API 없이 테스트 가능)
+- [x] 자동 태그 생성 (16개 키워드 감지)
+- [x] 실시간 문장 개선 기능
+- [x] 템플릿 시스템 (3가지 템플릿)
+- [x] API Routes (/api/ai/improve, /api/ai/tags)
+- [ ] 실제 OpenAI/Claude API 통합
+- [ ] Tiptap 리치 에디터 통합
+- [ ] 실시간 스트리밍 응답
 
-### Phase 3: Community Features (3주)
+### Phase 3: Community Features (예정)
 - [ ] 게시물 CRUD
 - [ ] 댓글 시스템
 - [ ] 좋아요/북마크
 - [ ] 검색 기능
 
-### Phase 4: Polish & Launch (2주)
+### Phase 4: Polish & Launch (예정)
 - [ ] 성능 최적화
 - [ ] 사용자 테스트
 - [ ] 베타 런칭
@@ -92,26 +107,47 @@ StudyBlogGenSeq/
 
 ### 필수 요구사항
 - Node.js 18+
-- pnpm (권장)
-- Supabase 계정
-- OpenAI API 키
+- npm 또는 pnpm
 
-### 설치 (예정)
+### 설치 및 실행
 
 ```bash
 # 저장소 클론
-git clone https://github.com/yourusername/StudyBlogGenSeq.git
+git clone https://github.com/blcktgr73/StudyBlogGenSeq.git
 cd StudyBlogGenSeq
 
 # 패키지 설치
-pnpm install
-
-# 환경 변수 설정
-cp .env.example .env.local
-# .env.local 파일에 API 키 입력
+npm install
 
 # 개발 서버 실행
-pnpm dev
+npm run dev
+```
+
+브라우저에서 http://localhost:3000 접속
+
+### 🎮 AI 에디터 체험하기
+
+1. **글쓰기 페이지 접속**: http://localhost:3000/write
+2. **템플릿 선택**: 학습 경험, 프로젝트 후기, 튜토리얼 중 선택
+3. **제목 입력**: 예) "Next.js로 AI 블로그 만들기"
+4. **내용 입력**:
+   - 테스트 문구 1: "저는 파이썬을 배웠어요"
+   - 테스트 문구 2: "성능이 좋아졌어요"
+5. **AI 기능 체험**:
+   - 2초 후 자동으로 태그 생성됨
+   - "AI 개선 제안받기" 버튼 클릭하여 문장 개선안 확인
+   - 제안을 "적용" 또는 "무시" 선택 가능
+
+### 환경 변수 (선택 사항)
+
+현재는 Mock AI 서비스를 사용하므로 API 키 없이도 작동합니다.
+
+실제 AI API를 사용하려면:
+```bash
+cp .env.example .env.local
+# .env.local 파일에 API 키 입력
+OPENAI_API_KEY=your_key_here
+ANTHROPIC_API_KEY=your_key_here
 ```
 
 ## 📊 성공 지표 (KPI)
