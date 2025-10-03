@@ -77,7 +77,11 @@ export default function ExplorePage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => (
-              <Card key={post.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card
+                key={post.id}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => router.push(`/post/${post.slug}`)}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <CardTitle className="line-clamp-2 flex-1">{post.title}</CardTitle>

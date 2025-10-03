@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket, Loader2, CheckCircle } from "lucide-react";
-import { savePost } from "@/lib/storage/posts";
+import { savePost, getPostById, type StoredPost } from "@/lib/storage/posts";
 
 export default function WritePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editPostId = searchParams.get('edit');
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -19,6 +22,24 @@ export default function WritePage() {
   const [isImproving, setIsImproving] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<StoredPost | null>(null);
+
+  // Load post for editing
+  useEffect(() => {
+    if (editPostId) {
+      const post = getPostById(editPostId);
+      if (post) {
+        setEditingPost(post);
+        setTitle(post.title);
+        setContent(post.content);
+        setSuggestedTags(post.tags);
+        setSelectedTemplate('learning'); // Default template when editing
+        if (post.aiSuggestionsUsed) {
+          setAiSuggestion('(Previously improved with AI)');
+        }
+      }
+    }
+  }, [editPostId]);
 
   const templates = [
     {
@@ -109,25 +130,30 @@ export default function WritePage() {
     setSaveMessage(null);
 
     try {
-      const savedPost = savePost({
-        title: title.trim(),
-        content: content.trim(),
-        tags: suggestedTags,
-        status,
-        aiSuggestionsUsed: !!aiSuggestion,
-        aiModelUsed: process.env.NEXT_PUBLIC_AI_PROVIDER || 'openai',
-      });
+      const savedPost = savePost(
+        {
+          title: title.trim(),
+          content: content.trim(),
+          tags: suggestedTags,
+          status,
+          aiSuggestionsUsed: !!aiSuggestion,
+          aiModelUsed: process.env.NEXT_PUBLIC_AI_PROVIDER || 'openai',
+        },
+        editingPost?.id // Pass postId if editing
+      );
 
       setSaveMessage(
-        status === 'published'
+        editingPost
+          ? '✅ 게시물이 수정되었습니다!'
+          : status === 'published'
           ? '✅ 게시물이 발행되었습니다!'
           : '💾 임시저장되었습니다.'
       );
 
-      // 발행 시 2초 후 Explore 페이지로 이동
-      if (status === 'published') {
+      // 발행 또는 수정 완료 시 2초 후 해당 게시물 페이지로 이동
+      if (status === 'published' || editingPost) {
         setTimeout(() => {
-          router.push('/explore');
+          router.push(`/post/${savedPost.slug}`);
         }, 2000);
       }
     } catch (error) {
@@ -153,9 +179,13 @@ export default function WritePage() {
     <div className="container py-12 max-w-5xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">새 글 작성</h1>
+        <h1 className="text-4xl font-bold mb-4">
+          {editingPost ? '글 수정' : '새 글 작성'}
+        </h1>
         <p className="text-lg text-muted-foreground">
-          AI의 도움을 받아 더 나은 글을 작성해보세요
+          {editingPost
+            ? '게시물을 수정하고 있습니다'
+            : 'AI의 도움을 받아 더 나은 글을 작성해보세요'}
         </p>
       </div>
 

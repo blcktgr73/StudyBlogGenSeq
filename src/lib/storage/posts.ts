@@ -80,7 +80,8 @@ export function getPostBySlug(slug: string): StoredPost | null {
  * Save post (create or update)
  */
 export function savePost(
-  post: Omit<StoredPost, 'id' | 'slug' | 'excerpt' | 'createdAt' | 'updatedAt' | 'viewCount' | 'likeCount' | 'commentCount'>
+  post: Omit<StoredPost, 'id' | 'slug' | 'excerpt' | 'createdAt' | 'updatedAt' | 'viewCount' | 'likeCount' | 'commentCount'>,
+  postId?: string
 ): StoredPost {
   const posts = getPosts();
   const now = new Date().toISOString();
@@ -88,37 +89,57 @@ export function savePost(
   // Generate slug from title
   const slug = generateSlug(post.title);
 
-  // Check if post with this slug exists
-  const existingIndex = posts.findIndex((p) => p.slug === slug);
-
   let savedPost: StoredPost;
 
-  if (existingIndex >= 0) {
-    // Update existing post
-    savedPost = {
-      ...posts[existingIndex],
-      ...post,
-      slug,
-      excerpt: generateExcerpt(post.content),
-      updatedAt: now,
-      publishedAt: post.status === 'published' ? (posts[existingIndex].publishedAt || now) : null,
-    };
-    posts[existingIndex] = savedPost;
+  // If postId is provided, update existing post by ID
+  if (postId) {
+    const existingIndex = posts.findIndex((p) => p.id === postId);
+
+    if (existingIndex >= 0) {
+      // Update existing post by ID
+      savedPost = {
+        ...posts[existingIndex],
+        ...post,
+        slug,
+        excerpt: generateExcerpt(post.content),
+        updatedAt: now,
+        publishedAt: post.status === 'published' ? (posts[existingIndex].publishedAt || now) : null,
+      };
+      posts[existingIndex] = savedPost;
+    } else {
+      throw new Error('Post not found');
+    }
   } else {
-    // Create new post
-    savedPost = {
-      id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      slug,
-      excerpt: generateExcerpt(post.content),
-      createdAt: now,
-      updatedAt: now,
-      publishedAt: post.status === 'published' ? now : null,
-      viewCount: 0,
-      likeCount: 0,
-      commentCount: 0,
-      ...post,
-    };
-    posts.push(savedPost);
+    // Check if post with this slug exists (for backwards compatibility)
+    const existingIndex = posts.findIndex((p) => p.slug === slug);
+
+    if (existingIndex >= 0) {
+      // Update existing post
+      savedPost = {
+        ...posts[existingIndex],
+        ...post,
+        slug,
+        excerpt: generateExcerpt(post.content),
+        updatedAt: now,
+        publishedAt: post.status === 'published' ? (posts[existingIndex].publishedAt || now) : null,
+      };
+      posts[existingIndex] = savedPost;
+    } else {
+      // Create new post
+      savedPost = {
+        id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        slug,
+        excerpt: generateExcerpt(post.content),
+        createdAt: now,
+        updatedAt: now,
+        publishedAt: post.status === 'published' ? now : null,
+        viewCount: 0,
+        likeCount: 0,
+        commentCount: 0,
+        ...post,
+      };
+      posts.push(savedPost);
+    }
   }
 
   // Save to localStorage
@@ -170,4 +191,30 @@ export function getPostsCount(): { total: number; published: number; drafts: num
     published: posts.filter((p) => p.status === 'published').length,
     drafts: posts.filter((p) => p.status === 'draft').length,
   };
+}
+
+/**
+ * Get post by ID
+ */
+export function getPostById(id: string): StoredPost | null {
+  const posts = getPosts();
+  return posts.find((post) => post.id === id) || null;
+}
+
+/**
+ * Increment view count
+ */
+export function incrementViewCount(postId: string): void {
+  const posts = getPosts();
+  const postIndex = posts.findIndex((p) => p.id === postId);
+
+  if (postIndex !== -1) {
+    posts[postIndex].viewCount += 1;
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    } catch (error) {
+      console.error('Error updating view count:', error);
+    }
+  }
 }
