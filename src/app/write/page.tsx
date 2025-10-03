@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket } from "lucide-react";
+import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket, Loader2 } from "lucide-react";
 
 export default function WritePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [isGeneratingTags, setIsGeneratingTags] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [isImproving, setIsImproving] = useState(false);
 
   const templates = [
     {
@@ -34,6 +38,63 @@ export default function WritePage() {
       color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
     },
   ];
+
+  // AI 태그 생성 함수
+  const generateTags = async () => {
+    if (!title && !content) return;
+
+    setIsGeneratingTags(true);
+    try {
+      const response = await fetch("/api/ai/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestedTags(data.tags.map((t: any) => t.tag));
+      }
+    } catch (error) {
+      console.error("Failed to generate tags:", error);
+    } finally {
+      setIsGeneratingTags(false);
+    }
+  };
+
+  // 텍스트 개선 함수
+  const improveText = async (text: string) => {
+    if (!text || text.length < 10) return;
+
+    setIsImproving(true);
+    try {
+      const response = await fetch("/api/ai/improve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiSuggestion(data.improved);
+      }
+    } catch (error) {
+      console.error("Failed to improve text:", error);
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
+  // 자동 태그 생성 (타이틀이나 내용 변경 시)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (title || content) {
+        generateTags();
+      }
+    }, 2000); // 2초 디바운스
+
+    return () => clearTimeout(timer);
+  }, [title, content]);
 
   return (
     <div className="container py-12 max-w-5xl">
@@ -104,34 +165,114 @@ export default function WritePage() {
 
           {/* Content Editor */}
           <div>
-            <label className="block text-sm font-medium mb-2">내용</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium">내용</label>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => improveText(content)}
+                disabled={isImproving || content.length < 10}
+              >
+                {isImproving ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    개선 중...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    AI 개선 제안받기
+                  </>
+                )}
+              </Button>
+            </div>
             <textarea
               placeholder="여기에 내용을 작성하세요...
 
-AI가 다음과 같이 도와드립니다:
-• 실시간 문장 개선 제안
-• 글 구조 가이드
-• 자동 태그 생성
-• 관련 자료 추천"
+테스트 문구:
+- '저는 파이썬을 배웠어요'
+- '성능이 좋아졌어요'
+
+위 문구를 입력하고 'AI 개선 제안받기' 버튼을 눌러보세요!"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="w-full min-h-[400px] px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground bg-background placeholder:text-muted-foreground"
             />
           </div>
 
+          {/* AI Text Improvement Suggestion */}
+          {aiSuggestion && (
+            <Card className="p-4 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+              <div className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                    💡 AI 개선 제안
+                  </h3>
+                  <p className="text-sm text-green-800 dark:text-green-200 mb-3">
+                    {aiSuggestion}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setContent(content + "\n\n" + aiSuggestion);
+                        setAiSuggestion(null);
+                      }}
+                    >
+                      적용하기
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAiSuggestion(null)}
+                    >
+                      무시
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium mb-2">태그</label>
-            <div className="flex flex-wrap gap-2 p-3 border rounded-lg">
-              <Badge variant="secondary">AI</Badge>
-              <Badge variant="secondary">학습</Badge>
-              <Badge variant="outline" className="cursor-pointer">
-                + 태그 추가
-              </Badge>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium">태그</label>
+              {isGeneratingTags && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  AI가 태그를 생성하는 중...
+                </span>
+              )}
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              * AI가 내용을 분석하여 자동으로 태그를 추천합니다
-            </p>
+            <div className="flex flex-wrap gap-2 p-3 border rounded-lg min-h-[50px]">
+              {suggestedTags.length > 0 ? (
+                suggestedTags.map((tag) => (
+                  <Badge key={tag} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  제목이나 내용을 입력하면 AI가 자동으로 태그를 추천합니다
+                </span>
+              )}
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                * AI가 내용을 분석하여 자동으로 태그를 추천합니다
+              </p>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={generateTags}
+                disabled={isGeneratingTags || (!title && !content)}
+              >
+                <Sparkles className="h-3 w-3 mr-1" />
+                다시 생성
+              </Button>
+            </div>
           </div>
 
           {/* Actions */}
