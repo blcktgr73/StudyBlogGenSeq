@@ -412,5 +412,17 @@ FOR EACH ROW
 EXECUTE FUNCTION update_tag_post_count();
 
 -- ============================================================================
+-- CUSTOM FUNCTIONS
+-- ============================================================================
+
+-- Function: Increment view count
+CREATE OR REPLACE FUNCTION increment_view_count(post_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE posts SET view_count = view_count + 1 WHERE id = post_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
 -- COMPLETED: Initial schema migration
 -- ============================================================================

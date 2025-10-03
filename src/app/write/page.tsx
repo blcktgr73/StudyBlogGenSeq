@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket, Loader2, CheckCircle } from "lucide-react";
-import { savePost, getPostById, type StoredPost } from "@/lib/storage/posts";
+import { savePost, getPostById, type Post } from "@/lib/posts";
 
 export default function WritePage() {
   const router = useRouter();
@@ -22,23 +22,26 @@ export default function WritePage() {
   const [isImproving, setIsImproving] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [editingPost, setEditingPost] = useState<StoredPost | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   // Load post for editing
   useEffect(() => {
-    if (editPostId) {
-      const post = getPostById(editPostId);
-      if (post) {
-        setEditingPost(post);
-        setTitle(post.title);
-        setContent(post.content);
-        setSuggestedTags(post.tags);
-        setSelectedTemplate('learning'); // Default template when editing
-        if (post.aiSuggestionsUsed) {
-          setAiSuggestion('(Previously improved with AI)');
+    const loadPost = async () => {
+      if (editPostId) {
+        const post = await getPostById(editPostId);
+        if (post) {
+          setEditingPost(post);
+          setTitle(post.title);
+          setContent(post.content);
+          setSuggestedTags(post.tags);
+          setSelectedTemplate('learning'); // Default template when editing
+          if (post.aiSuggestionsUsed) {
+            setAiSuggestion('(Previously improved with AI)');
+          }
         }
       }
-    }
+    };
+    loadPost();
   }, [editPostId]);
 
   const templates = [

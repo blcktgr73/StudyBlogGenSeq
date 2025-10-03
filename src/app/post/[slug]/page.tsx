@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Clock, Eye, Heart, MessageSquare, Bookmark, Edit } from 'lucide-react';
-import { getPostBySlug, type StoredPost, incrementViewCount } from '@/lib/storage/posts';
+import { getPostBySlug, type Post, incrementViewCount } from '@/lib/posts';
 import { CommentSection } from '@/components/CommentSection';
 
 export default function PostDetailPage() {
@@ -14,14 +14,14 @@ export default function PostDetailPage() {
   const router = useRouter();
   const slug = params.slug as string;
 
-  const [post, setPost] = useState<StoredPost | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
 
   useEffect(() => {
-    const loadPost = () => {
-      const foundPost = getPostBySlug(slug);
+    const loadPost = async () => {
+      const foundPost = await getPostBySlug(slug);
 
       if (!foundPost) {
         setIsLoading(false);
@@ -29,10 +29,10 @@ export default function PostDetailPage() {
       }
 
       // Increment view count
-      incrementViewCount(foundPost.id);
+      await incrementViewCount(foundPost.id);
 
       // Reload to get updated view count
-      const updatedPost = getPostBySlug(slug);
+      const updatedPost = await getPostBySlug(slug);
       setPost(updatedPost);
       setIsLoading(false);
 

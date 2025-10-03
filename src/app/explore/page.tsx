@@ -4,17 +4,19 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Heart, MessageCircle, Sparkles } from "lucide-react";
-import { getPublishedPosts, type StoredPost } from "@/lib/storage/posts";
+import { getPublishedPosts, type Post } from "@/lib/posts";
 
 export default function ExplorePage() {
-  const [posts, setPosts] = useState<StoredPost[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load posts from LocalStorage
-    const loadedPosts = getPublishedPosts();
-    setPosts(loadedPosts);
-    setIsLoading(false);
+    const loadPosts = async () => {
+      const loadedPosts = await getPublishedPosts();
+      setPosts(loadedPosts);
+      setIsLoading(false);
+    };
+    loadPosts();
   }, []);
 
   const formatDate = (dateString: string) => {
