@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket, Loader2 } from "lucide-react";
+import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket, Loader2, CheckCircle } from "lucide-react";
+import { savePost } from "@/lib/storage/posts";
 
 export default function WritePage() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -14,6 +17,8 @@ export default function WritePage() {
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isImproving, setIsImproving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const templates = [
     {
@@ -82,6 +87,50 @@ export default function WritePage() {
       console.error("Failed to improve text:", error);
     } finally {
       setIsImproving(false);
+    }
+  };
+
+  // 저장 함수
+  const handleSave = async (status: 'draft' | 'published') => {
+    if (!title.trim()) {
+      alert('제목을 입력해주세요!');
+      return;
+    }
+    if (!content.trim()) {
+      alert('내용을 입력해주세요!');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveMessage(null);
+
+    try {
+      const savedPost = savePost({
+        title: title.trim(),
+        content: content.trim(),
+        tags: suggestedTags,
+        status,
+        aiSuggestionsUsed: !!aiSuggestion,
+        aiModelUsed: process.env.NEXT_PUBLIC_AI_PROVIDER || 'openai',
+      });
+
+      setSaveMessage(
+        status === 'published'
+          ? '✅ 게시물이 발행되었습니다!'
+          : '💾 임시저장되었습니다.'
+      );
+
+      // 발행 시 2초 후 Explore 페이지로 이동
+      if (status === 'published') {
+        setTimeout(() => {
+          router.push('/explore');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Failed to save post:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -275,22 +324,43 @@ export default function WritePage() {
             </div>
           </div>
 
+          {/* Save Message */}
+          {saveMessage && (
+            <Card className="p-4 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+              <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
+                <CheckCircle className="h-5 w-5" />
+                <span className="font-medium">{saveMessage}</span>
+              </div>
+            </Card>
+          )}
+
           {/* Actions */}
           <div className="flex items-center justify-between pt-6 border-t">
             <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
               템플릿 다시 선택
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline">
-                <Eye className="h-4 w-4 mr-2" />
-                미리보기
-              </Button>
-              <Button variant="outline">
-                <Save className="h-4 w-4 mr-2" />
+              <Button
+                variant="outline"
+                onClick={() => handleSave('draft')}
+                disabled={isSaving || !title || !content}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
                 임시저장
               </Button>
-              <Button>
-                <Sparkles className="h-4 w-4 mr-2" />
+              <Button
+                onClick={() => handleSave('published')}
+                disabled={isSaving || !title || !content}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
                 발행하기
               </Button>
             </div>

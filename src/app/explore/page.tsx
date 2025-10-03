@@ -1,122 +1,139 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Heart, MessageCircle } from "lucide-react";
-
-// 임시 데이터 (나중에 DB에서 가져올 예정)
-const mockPosts = [
-  {
-    id: 1,
-    title: "GPT-4를 활용한 챗봇 개발 경험",
-    excerpt: "OpenAI API를 사용해서 맞춤형 AI 챗봇을 만들면서 배운 점들을 공유합니다.",
-    author: "김개발",
-    tags: ["GPT-4", "AI", "ChatBot"],
-    likes: 24,
-    comments: 8,
-    createdAt: "2시간 전",
-  },
-  {
-    id: 2,
-    title: "Next.js 15 App Router 완벽 가이드",
-    excerpt: "Next.js 15의 새로운 App Router를 실전 프로젝트에 적용하며 정리한 내용입니다.",
-    author: "이프론트",
-    tags: ["Next.js", "React", "Tutorial"],
-    likes: 42,
-    comments: 15,
-    createdAt: "5시간 전",
-  },
-  {
-    id: 3,
-    title: "Supabase로 3일 만에 MVP 만들기",
-    excerpt: "Supabase를 활용해 빠르게 프로토타입을 만든 경험을 공유합니다.",
-    author: "박백엔드",
-    tags: ["Supabase", "Database", "MVP"],
-    likes: 38,
-    comments: 12,
-    createdAt: "1일 전",
-  },
-  {
-    id: 4,
-    title: "Claude API vs OpenAI API 비교 분석",
-    excerpt: "두 LLM API를 실제 프로젝트에 적용해보고 장단점을 정리했습니다.",
-    author: "최엘엘엠",
-    tags: ["Claude", "OpenAI", "LLM"],
-    likes: 56,
-    comments: 22,
-    createdAt: "2일 전",
-  },
-];
+import { Clock, Heart, MessageCircle, Sparkles } from "lucide-react";
+import { getPublishedPosts, type StoredPost } from "@/lib/storage/posts";
 
 export default function ExplorePage() {
+  const [posts, setPosts] = useState<StoredPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Load posts from LocalStorage
+    const loadedPosts = getPublishedPosts();
+    setPosts(loadedPosts);
+    setIsLoading(false);
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}일 전`;
+    if (hours > 0) return `${hours}시간 전`;
+    return `방금 전`;
+  };
+
   return (
     <div className="container py-12">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="text-4xl font-bold mb-4">둘러보기</h1>
-        <p className="text-lg text-muted-foreground">
-          다른 사람들의 학습 경험을 탐색하고 영감을 얻어보세요
+        <h1 className="text-4xl font-bold mb-4">탐색하기</h1>
+        <p className="text-xl text-muted-foreground">
+          다른 사람들이 공유한 학습 경험과 프로젝트를 둘러보세요
         </p>
       </div>
 
-      {/* Filters (추후 구현) */}
-      <div className="mb-8 flex gap-2">
-        <Badge variant="default">최신</Badge>
-        <Badge variant="outline">인기</Badge>
-        <Badge variant="outline">추천</Badge>
+      {/* Filter Badges */}
+      <div className="flex gap-2 mb-8">
+        <Badge variant="default" className="cursor-pointer">
+          최신
+        </Badge>
+        <Badge variant="outline" className="cursor-pointer hover:bg-accent">
+          인기
+        </Badge>
+        <Badge variant="outline" className="cursor-pointer hover:bg-accent">
+          추천
+        </Badge>
       </div>
 
       {/* Posts Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockPosts.map((post) => (
-          <Card key={post.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader>
-              <CardTitle className="line-clamp-2">{post.title}</CardTitle>
-              <CardDescription className="line-clamp-2">
-                {post.excerpt}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {post.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-
-              {/* Meta */}
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <Heart className="h-4 w-4" />
-                    <span>{post.likes}</span>
+      {isLoading ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-lg text-muted-foreground mb-4">
+            아직 발행된 글이 없습니다.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Write 페이지에서 첫 게시물을 작성해보세요!
+          </p>
+          <a
+            href="/write"
+            className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            글 쓰러 가기
+          </a>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {posts.map((post) => (
+              <Card key={post.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-2">
+                    <CardTitle className="line-clamp-2 flex-1">{post.title}</CardTitle>
+                    {post.aiSuggestionsUsed && (
+                      <Badge variant="outline" className="ml-2 flex-shrink-0">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        AI
+                      </Badge>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <MessageCircle className="h-4 w-4" />
-                    <span>{post.comments}</span>
+                  <CardDescription className="line-clamp-3">
+                    {post.excerpt}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Tags */}
+                  {post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {post.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Meta */}
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <Heart className="h-4 w-4" />
+                        <span>{post.likeCount}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MessageCircle className="h-4 w-4" />
+                        <span>{post.commentCount}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{formatDate(post.publishedAt!)}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{post.createdAt}</span>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-              {/* Author */}
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-sm font-medium">{post.author}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Load More (추후 구현) */}
-      <div className="mt-12 text-center">
-        <button className="px-6 py-2 border rounded-md hover:bg-accent">
-          더 보기
-        </button>
-      </div>
+          {/* Stats */}
+          <div className="mt-12 text-center">
+            <p className="text-sm text-muted-foreground">
+              총 {posts.length}개의 게시물
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
