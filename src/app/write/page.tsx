@@ -83,7 +83,7 @@ export default function WritePage() {
               placeholder="제목을 입력하세요..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 text-xl font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-4 py-3 text-xl font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground bg-background placeholder:text-muted-foreground"
             />
           </div>
 
@@ -115,7 +115,7 @@ AI가 다음과 같이 도와드립니다:
 • 관련 자료 추천"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full min-h-[400px] px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring font-mono text-sm"
+              className="w-full min-h-[400px] px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground bg-background placeholder:text-muted-foreground"
             />
           </div>
 
