@@ -522,15 +522,218 @@ OPENAI_API_KEY=sk-...
 - `placeholder:text-muted-foreground` - 플레이스홀더 구분
 - 결과: 라이트/다크 모드 모두 명확한 대비
 
-## 📈 다음 업데이트 예정
+---
 
-다음 개발 세션에서 다음 내용이 추가될 예정:
-- 실제 OpenAI/Claude API 통합
-- Supabase 프로젝트 생성 및 설정
-- 인증 시스템 (로그인/회원가입)
-- 게시물 저장 기능
+## 📅 2025-10-03 (세션 4) - Supabase Database Setup
+
+### ✅ 데이터베이스 인프라 완료
+
+#### 1. Supabase 클라이언트 설치
+
+**설치된 패키지**:
+```bash
+npm install @supabase/supabase-js @supabase/ssr
+```
+- `@supabase/supabase-js`: Supabase JavaScript 클라이언트
+- `@supabase/ssr`: Next.js App Router SSR 지원
+- 총 15개 패키지 추가
+
+#### 2. 데이터베이스 스키마 마이그레이션
+
+**supabase/migrations/20251003_001_initial_schema.sql** (450줄):
+- 7개 테이블 생성: profiles, tags, posts, post_tags, comments, likes, bookmarks
+- UUID 확장 활성화
+- 인덱스 최적화 (slug, 날짜, 카운트)
+- 전문 검색 GIN 인덱스
+- 통계 자동 업데이트 트리거 5개
+- Row Level Security (RLS) 정책
+
+**핵심 테이블**:
+```sql
+profiles    - 사용자 프로필 (username, bio, avatar)
+posts       - 게시물 (title, content, status, ai_model_used)
+tags        - 태그 (name, slug, color, post_count)
+post_tags   - Many-to-Many 관계
+comments    - 댓글 (parent_id로 대댓글 지원)
+likes       - 좋아요 (post/comment 통합)
+bookmarks   - 북마크 (collection 지원)
+```
+
+**supabase/migrations/20251003_002_seed_data.sql**:
+- 16개 기본 태그 삽입
+- 컬러 코딩 (JavaScript: #F7DF1E, React: #61DAFB, etc.)
+- 한글 태그 포함 (백엔드, 프론트엔드, 데이터베이스, etc.)
+
+#### 3. Supabase 클라이언트 설정
+
+**src/lib/supabase/client.ts** - 클라이언트 컴포넌트용:
+```typescript
+export function createClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+```
+
+**src/lib/supabase/server.ts** - 서버 컴포넌트용:
+```typescript
+export async function createClient() {
+  const cookieStore = await cookies();
+  return createServerClient<Database>(..., {
+    cookies: { getAll(), setAll() }
+  });
+}
+```
+
+**src/lib/supabase/types.ts** - TypeScript 타입 정의:
+- Database 인터페이스
+- 7개 테이블 타입 (Row, Insert, Update)
+- Type-safe 쿼리 지원
+
+#### 4. 미들웨어 설정
+
+**src/middleware.ts**:
+- 자동 세션 갱신
+- 쿠키 관리
+- 인증 상태 확인
+- Static 파일 제외 matcher 설정
+
+#### 5. 데이터베이스 쿼리 헬퍼 함수
+
+**src/lib/supabase/queries/posts.ts**:
+```typescript
+getPublishedPosts()      // 페이지네이션 + 정렬
+getPostBySlug()          // Slug로 단일 게시물 + 태그
+getPostsByAuthor()       // 작성자별 게시물
+getPostsByTag()          // 태그별 게시물
+searchPosts()            // 전문 검색
+createPost()             // 게시물 생성
+updatePost()             // 게시물 수정
+deletePost()             // 게시물 삭제
+incrementViewCount()     // 조회수 증가
+```
+
+**src/lib/supabase/queries/tags.ts**:
+```typescript
+getAllTags()             // 모든 태그 (post_count DESC)
+getPopularTags()         // 인기 태그 (top N)
+getTagBySlug()           // Slug로 태그 조회
+getPostTags()            // 게시물의 태그 목록
+addTagsToPost()          // 태그 추가
+removeTagsFromPost()     // 태그 제거
+findOrCreateTags()       // 태그 찾기 또는 생성
+```
+
+**src/lib/supabase/queries/profiles.ts**:
+```typescript
+getProfile()             // ID로 프로필 조회
+getProfileByUsername()   // Username으로 조회
+createProfile()          // 프로필 생성
+updateProfile()          // 프로필 수정
+isUsernameAvailable()    // Username 중복 확인
+```
+
+#### 6. Row Level Security (RLS) 정책
+
+**Profiles**:
+- ✅ 모든 사용자가 읽기 가능
+- ✅ 본인만 수정 가능
+
+**Posts**:
+- ✅ 발행된 게시물은 공개
+- ✅ 초안은 작성자만 조회
+- ✅ 본인 게시물만 CRUD
+
+**Comments**:
+- ✅ 모두 읽기 가능
+- ✅ 로그인 사용자만 작성
+- ✅ 본인만 수정/삭제
+
+**Likes & Bookmarks**:
+- ✅ 본인 것만 관리
+
+#### 7. 자동 통계 업데이트 트리거
+
+**5개 트리거 함수**:
+```sql
+update_post_like_count()      -- 게시물 좋아요 수
+update_comment_like_count()   -- 댓글 좋아요 수
+update_post_comment_count()   -- 게시물 댓글 수
+update_post_bookmark_count()  -- 게시물 북마크 수
+update_tag_post_count()       -- 태그 게시물 수
+```
+
+실시간 통계 업데이트:
+- 좋아요/댓글/북마크 추가 시 자동 증가
+- 삭제 시 자동 감소
+- Race condition 방지
+
+#### 8. 문서화
+
+**docs/07-supabase-setup-guide.md** (350줄 종합 가이드):
+- Supabase 프로젝트 생성 단계별 설명
+- 환경 변수 설정 방법
+- 데이터베이스 스키마 적용 (Dashboard/CLI)
+- RLS 정책 설명
+- 연결 테스트 API 예시
+- 사용 예시 (Server/Client Component)
+- 성능 최적화 팁
+- 보안 Best Practices
 
 ---
 
-**최종 업데이트**: 2025-10-03 (세션 2 완료)
-**다음 마일스톤**: 실제 LLM API 통합 또는 Supabase 설정
+## 📊 현재 상태 (Updated)
+
+### 완료된 작업
+- ✅ 프로젝트 기획 및 문서화 (100%)
+- ✅ Git 저장소 초기화 (100%)
+- ✅ Next.js 프로젝트 설정 (100%)
+- ✅ 기본 프로젝트 구조 (100%)
+- ✅ UI 컴포넌트 라이브러리 (100%)
+- ✅ 핵심 페이지 (Home, Explore, Tags, Write) (100%)
+- ✅ **AI 에디터 프로토타입 (100%)**
+- ✅ **Real AI Provider 통합 (100%)**
+- ✅ **Supabase 데이터베이스 설정 (100%)**
+
+### 진행 중인 작업
+- 없음
+
+### 다음 단계
+- ⏭️ 인증 시스템 구축 (OAuth, 소셜 로그인)
+- ⏭️ 게시물 CRUD API 구현
+- ⏭️ Tiptap Rich Text Editor 통합
+- ⏭️ 이미지 업로드 (Supabase Storage)
+
+## 🎯 Phase 3: Database & Auth 진행률
+
+**목표**: 데이터베이스 및 인증 (2주)
+
+| 작업 | 상태 | 진행률 |
+|------|------|--------|
+| Supabase 프로젝트 생성 | ✅ 완료 | 100% |
+| 데이터베이스 스키마 설계 | ✅ 완료 | 100% |
+| SQL 마이그레이션 파일 | ✅ 완료 | 100% |
+| Supabase 클라이언트 설정 | ✅ 완료 | 100% |
+| TypeScript 타입 정의 | ✅ 완료 | 100% |
+| 미들웨어 설정 | ✅ 완료 | 100% |
+| Query 헬퍼 함수 | ✅ 완료 | 100% |
+| RLS 정책 설정 | ✅ 완료 | 100% |
+| 문서화 | ✅ 완료 | 100% |
+| OAuth 인증 설정 | ⏸️ 대기 | 0% |
+| 소셜 로그인 UI | ⏸️ 대기 | 0% |
+
+**전체 진행률**: ~75%
+
+## 📈 다음 업데이트 예정
+
+다음 개발 세션에서 다음 내용이 추가될 예정:
+- Supabase Auth 설정 (Google/GitHub OAuth)
+- 로그인/회원가입 페이지
+- 게시물 CRUD API 및 UI
+- 이미지 업로드 기능
+
+---
+
+**최종 업데이트**: 2025-10-03 (세션 4 완료)
+**다음 마일스톤**: 인증 시스템 구축
