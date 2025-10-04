@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket, Loader2, CheckCircle } from "lucide-react";
 import { savePost, getPostById, type Post } from "@/lib/posts";
 
-export default function WritePage() {
+function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editPostId = searchParams.get('edit');
@@ -418,5 +418,13 @@ export default function WritePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WritePage() {
+  return (
+    <Suspense fallback={<div className="container py-12 max-w-5xl text-center">로딩 중...</div>}>
+      <WritePageContent />
+    </Suspense>
   );
 }
