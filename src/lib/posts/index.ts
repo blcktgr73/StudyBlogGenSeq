@@ -4,21 +4,12 @@
  */
 
 import * as LocalStorage from '../storage/posts';
-import * as Supabase from '../supabase/posts';
+// import * as Supabase from '../supabase/posts';
 
 // Check if Supabase is configured
 function isSupabaseConfigured(): boolean {
-  if (typeof window === 'undefined') return false;
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  return !!(
-    url &&
-    key &&
-    url !== 'https://placeholder.supabase.co' &&
-    key !== 'placeholder_key'
-  );
+  // Temporarily disabled for build fix
+  return false;
 }
 
 export interface Post {
@@ -39,26 +30,26 @@ export interface Post {
   commentCount: number;
 }
 
-// Convert Supabase format to app format
-function supabaseToPost(sp: Supabase.SupabasePost): Post {
-  return {
-    id: sp.id,
-    title: sp.title,
-    slug: sp.slug,
-    content: sp.content,
-    excerpt: sp.excerpt,
-    tags: sp.tags,
-    status: sp.status,
-    aiSuggestionsUsed: sp.ai_suggestions_used,
-    aiModelUsed: sp.ai_model_used,
-    createdAt: sp.created_at,
-    updatedAt: sp.updated_at,
-    publishedAt: sp.published_at,
-    viewCount: sp.view_count,
-    likeCount: sp.like_count,
-    commentCount: sp.comment_count,
-  };
-}
+// Convert Supabase format to app format (disabled)
+// function supabaseToPost(sp: Supabase.SupabasePost): Post {
+//   return {
+//     id: sp.id,
+//     title: sp.title,
+//     slug: sp.slug,
+//     content: sp.content,
+//     excerpt: sp.excerpt,
+//     tags: sp.tags,
+//     status: sp.status,
+//     aiSuggestionsUsed: sp.ai_suggestions_used,
+//     aiModelUsed: sp.ai_model_used,
+//     createdAt: sp.created_at,
+//     updatedAt: sp.updated_at,
+//     publishedAt: sp.published_at,
+//     viewCount: sp.view_count,
+//     likeCount: sp.like_count,
+//     commentCount: sp.comment_count,
+//   };
+// }
 
 // Convert LocalStorage format to app format
 function localStorageToPost(lp: LocalStorage.StoredPost): Post {
@@ -86,8 +77,9 @@ function localStorageToPost(lp: LocalStorage.StoredPost): Post {
  */
 export async function getPublishedPosts(): Promise<Post[]> {
   if (isSupabaseConfigured()) {
-    const posts = await Supabase.getPublishedPosts();
-    return posts.map(supabaseToPost);
+    // const posts = await Supabase.getPublishedPosts();
+    // return posts.map(supabaseToPost);
+    return [];
   } else {
     const posts = LocalStorage.getPublishedPosts();
     return posts.map(localStorageToPost);
@@ -99,8 +91,9 @@ export async function getPublishedPosts(): Promise<Post[]> {
  */
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   if (isSupabaseConfigured()) {
-    const post = await Supabase.getPostBySlug(slug);
-    return post ? supabaseToPost(post) : null;
+    // const post = await Supabase.getPostBySlug(slug);
+    // return post ? supabaseToPost(post) : null;
+    return null;
   } else {
     const post = LocalStorage.getPostBySlug(slug);
     return post ? localStorageToPost(post) : null;
@@ -112,8 +105,9 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
  */
 export async function getPostById(id: string): Promise<Post | null> {
   if (isSupabaseConfigured()) {
-    const post = await Supabase.getPostById(id);
-    return post ? supabaseToPost(post) : null;
+    // const post = await Supabase.getPostById(id);
+    // return post ? supabaseToPost(post) : null;
+    return null;
   } else {
     const post = LocalStorage.getPostById(id);
     return post ? localStorageToPost(post) : null;
@@ -135,18 +129,19 @@ export async function savePost(
   postId?: string
 ): Promise<Post | null> {
   if (isSupabaseConfigured()) {
-    const saved = await Supabase.savePost(
-      {
-        title: post.title,
-        content: post.content,
-        tags: post.tags,
-        status: post.status,
-        ai_suggestions_used: post.aiSuggestionsUsed,
-        ai_model_used: post.aiModelUsed,
-      },
-      postId
-    );
-    return saved ? supabaseToPost(saved) : null;
+    // const saved = await Supabase.savePost(
+    //   {
+    //     title: post.title,
+    //     content: post.content,
+    //     tags: post.tags,
+    //     status: post.status,
+    //     ai_suggestions_used: post.aiSuggestionsUsed,
+    //     ai_model_used: post.aiModelUsed,
+    //   },
+    //   postId
+    // );
+    // return saved ? supabaseToPost(saved) : null;
+    return null;
   } else {
     const saved = LocalStorage.savePost(post, postId);
     return localStorageToPost(saved);
@@ -158,7 +153,7 @@ export async function savePost(
  */
 export async function incrementViewCount(postId: string): Promise<void> {
   if (isSupabaseConfigured()) {
-    await Supabase.incrementViewCount(postId);
+    // await Supabase.incrementViewCount(postId);
   } else {
     LocalStorage.incrementViewCount(postId);
   }
@@ -169,7 +164,8 @@ export async function incrementViewCount(postId: string): Promise<void> {
  */
 export async function deletePost(postId: string): Promise<boolean> {
   if (isSupabaseConfigured()) {
-    return await Supabase.deletePost(postId);
+    // return await Supabase.deletePost(postId);
+    return false;
   } else {
     // LocalStorage doesn't have deleteById, so we need to get post first
     const post = LocalStorage.getPostById(postId);
@@ -189,7 +185,8 @@ export async function getPostsCount(): Promise<{
   drafts: number;
 }> {
   if (isSupabaseConfigured()) {
-    return await Supabase.getPostsCount();
+    // return await Supabase.getPostsCount();
+    return { total: 0, published: 0, drafts: 0 };
   } else {
     return LocalStorage.getPostsCount();
   }

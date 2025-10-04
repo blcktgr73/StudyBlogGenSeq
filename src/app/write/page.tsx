@@ -133,7 +133,7 @@ export default function WritePage() {
     setSaveMessage(null);
 
     try {
-      const savedPost = savePost(
+      const savedPost = await savePost(
         {
           title: title.trim(),
           content: content.trim(),
@@ -144,6 +144,11 @@ export default function WritePage() {
         },
         editingPost?.id // Pass postId if editing
       );
+
+      if (!savedPost) {
+        alert('저장 중 오류가 발생했습니다.');
+        return;
+      }
 
       setSaveMessage(
         editingPost

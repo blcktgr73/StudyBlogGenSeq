@@ -80,7 +80,7 @@ export function getPostBySlug(slug: string): StoredPost | null {
  * Save post (create or update)
  */
 export function savePost(
-  post: Omit<StoredPost, 'id' | 'slug' | 'excerpt' | 'createdAt' | 'updatedAt' | 'viewCount' | 'likeCount' | 'commentCount'>,
+  post: Omit<StoredPost, 'id' | 'slug' | 'excerpt' | 'createdAt' | 'updatedAt' | 'publishedAt' | 'viewCount' | 'likeCount' | 'commentCount'>,
   postId?: string
 ): StoredPost {
   const posts = getPosts();
