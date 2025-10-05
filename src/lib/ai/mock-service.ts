@@ -5,6 +5,8 @@ import type {
   TextImprovementRequest,
   TextImprovementResponse,
   TagSuggestion,
+  StructureGenerationRequest,
+  StructureGenerationResponse,
 } from "./types";
 
 // 시뮬레이션 지연 시간
@@ -91,6 +93,149 @@ export class MockAIService implements AIService {
 
     // 상위 5개만 반환
     return suggestions.slice(0, 5);
+  }
+
+  async generateStructure(
+    request: StructureGenerationRequest
+  ): Promise<StructureGenerationResponse> {
+    await sleep(MOCK_DELAY);
+
+    const { userInput } = request;
+    const input = userInput.toLowerCase();
+
+    // 학습 경험 패턴
+    if (input.includes('배웠') || input.includes('학습') || input.includes('공부')) {
+      return {
+        postType: '학습 경험',
+        reasoning: '새로운 기술이나 개념을 학습한 경험을 공유하는 글로 보입니다.',
+        sections: [
+          {
+            order: 1,
+            title: '학습 배경',
+            description: '왜 이 기술을 배우게 되었나요?',
+            placeholder: '예: 프로젝트에서 상태 관리가 복잡해져서 Redux를 배우기로 결정했습니다...',
+          },
+          {
+            order: 2,
+            title: '학습 과정',
+            description: '어떻게 학습했나요? 어떤 자료를 참고했나요?',
+            placeholder: '예: 공식 문서를 먼저 읽고, 유튜브 강의를 따라하면서 실습했습니다...',
+          },
+          {
+            order: 3,
+            title: '실습 및 적용',
+            description: '학습한 내용을 어떻게 적용해봤나요?',
+            placeholder: '예: 간단한 Todo 앱을 만들어보면서 Redux의 핵심 개념을 이해했습니다...',
+          },
+          {
+            order: 4,
+            title: '배운 점과 느낀 점',
+            description: '어떤 인사이트를 얻었나요? 어려웠던 점은?',
+            placeholder: '예: 처음엔 보일러플레이트가 많아 복잡했지만, 상태 흐름이 명확해지는 장점을 느꼈습니다...',
+          },
+        ],
+      };
+    }
+
+    // 프로젝트 후기 패턴
+    if (input.includes('프로젝트') || input.includes('만들었') || input.includes('개발')) {
+      return {
+        postType: '프로젝트 후기',
+        reasoning: '프로젝트 개발 경험을 회고하는 글로 보입니다.',
+        sections: [
+          {
+            order: 1,
+            title: '프로젝트 소개',
+            description: '어떤 프로젝트인가요? 왜 시작했나요?',
+            placeholder: '예: 개인 블로그를 Next.js로 만들었습니다. SEO와 성능을 개선하고 싶었습니다...',
+          },
+          {
+            order: 2,
+            title: '기술 스택 선택',
+            description: '어떤 기술을 사용했고, 왜 선택했나요?',
+            placeholder: '예: Next.js 14 App Router, TypeScript, Tailwind CSS를 사용했습니다...',
+          },
+          {
+            order: 3,
+            title: '주요 기능 및 구현',
+            description: '핵심 기능을 어떻게 구현했나요?',
+            placeholder: '예: MDX로 블로그 포스트를 작성하고, gray-matter로 메타데이터를 파싱했습니다...',
+          },
+          {
+            order: 4,
+            title: '트러블슈팅',
+            description: '어떤 문제를 겪었고 어떻게 해결했나요?',
+            placeholder: '예: 빌드 시 이미지 최적화 오류가 발생해서 next/image 설정을 수정했습니다...',
+          },
+          {
+            order: 5,
+            title: '회고 및 개선 방향',
+            description: '배운 점과 앞으로의 계획은?',
+            placeholder: '예: TypeScript를 더 깊이 이해하게 되었고, 다음엔 테스트 코드를 추가하고 싶습니다...',
+          },
+        ],
+      };
+    }
+
+    // 문제 해결 패턴
+    if (input.includes('버그') || input.includes('에러') || input.includes('해결') || input.includes('문제')) {
+      return {
+        postType: '문제 해결 과정',
+        reasoning: '특정 문제를 해결한 경험을 공유하는 글로 보입니다.',
+        sections: [
+          {
+            order: 1,
+            title: '문제 상황',
+            description: '어떤 문제가 발생했나요?',
+            placeholder: '예: 프로덕션 환경에서만 API 호출이 실패하는 문제가 발생했습니다...',
+          },
+          {
+            order: 2,
+            title: '원인 분석',
+            description: '어떻게 원인을 찾았나요?',
+            placeholder: '예: 브라우저 개발자 도구와 서버 로그를 확인하면서 CORS 설정 문제임을 발견했습니다...',
+          },
+          {
+            order: 3,
+            title: '해결 방법',
+            description: '어떻게 해결했나요? 코드나 설정 변경 내용은?',
+            placeholder: '예: Next.js API 라우트에 CORS 헤더를 추가하여 문제를 해결했습니다...',
+          },
+          {
+            order: 4,
+            title: '배운 점 및 예방책',
+            description: '이 경험에서 무엇을 배웠나요?',
+            placeholder: '예: 로컬과 프로덕션 환경의 차이를 항상 고려해야 한다는 것을 배웠습니다...',
+          },
+        ],
+      };
+    }
+
+    // 기본 구조 (범용)
+    return {
+      postType: '일반 글',
+      reasoning: '자유로운 형식의 글로 보입니다. 기본 구조를 제안합니다.',
+      sections: [
+        {
+          order: 1,
+          title: '소개',
+          description: '어떤 이야기를 나누고 싶으신가요?',
+          placeholder: '글의 주제와 배경을 소개해주세요...',
+        },
+        {
+          order: 2,
+          title: '본문',
+          description: '핵심 내용을 자유롭게 작성하세요',
+          placeholder: '상세한 내용을 작성해주세요...',
+        },
+        {
+          order: 3,
+          title: '마무리',
+          description: '결론이나 배운 점을 정리하세요',
+          placeholder: '글을 마무리하고 인사이트를 공유해주세요...',
+        },
+      ],
+    };
   }
 }
 

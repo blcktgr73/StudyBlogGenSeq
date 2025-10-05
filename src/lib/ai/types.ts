@@ -42,6 +42,24 @@ export interface SummarizationResponse {
   keyPoints: string[];
 }
 
+export interface StructureGenerationRequest {
+  userInput: string; // 사용자의 자유로운 글 설명
+  context?: string; // 추가 컨텍스트
+}
+
+export interface StructureSection {
+  title: string;
+  description: string;
+  placeholder: string;
+  order: number;
+}
+
+export interface StructureGenerationResponse {
+  postType: string; // 학습경험, 프로젝트후기, 튜토리얼 등
+  sections: StructureSection[];
+  reasoning: string; // AI가 이 구조를 제안한 이유
+}
+
 export type AIProvider = 'openai' | 'anthropic' | 'mock';
 
 export interface AIConfig {
@@ -64,4 +82,9 @@ export interface AIService {
    * Suggest relevant tags based on title and content
    */
   suggestTags(title: string, content: string): Promise<TagSuggestion[]>;
+
+  /**
+   * Generate customized post structure based on user input
+   */
+  generateStructure(request: StructureGenerationRequest): Promise<StructureGenerationResponse>;
 }

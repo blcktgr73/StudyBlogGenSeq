@@ -4,6 +4,8 @@ import type {
   TextImprovementRequest,
   TextImprovementResponse,
   TagSuggestion,
+  StructureGenerationRequest,
+  StructureGenerationResponse,
 } from './types';
 
 /**
@@ -137,5 +139,70 @@ Respond with ONLY the improved text, no explanations.`;
     if (lengthIncrease > 1.5) return 'detail';
     if (improved.includes('\n') && !original.includes('\n')) return 'structure';
     return 'clarity';
+  }
+
+  async generateStructure(
+    request: StructureGenerationRequest
+  ): Promise<StructureGenerationResponse> {
+    const { userInput, context } = request;
+
+    const systemPrompt = `You are an expert content structure advisor for technical and learning blogs.
+Your task is to analyze the user's brief description and create a customized post structure.
+
+Consider these post types:
+- 학습 경험 (Learning Experience): sharing what was learned
+- 프로젝트 후기 (Project Review): reflecting on a project
+- 튜토리얼 (Tutorial): step-by-step guide
+- 문제 해결 (Problem Solving): troubleshooting story
+- 일반 글 (General): flexible format
+
+Respond in JSON format:
+{
+  "postType": "detected type in Korean",
+  "reasoning": "why this structure fits (in Korean)",
+  "sections": [
+    {
+      "order": 1,
+      "title": "section title in Korean",
+      "description": "what to write here (in Korean)",
+      "placeholder": "example text (in Korean)"
+    },
+    ...
+  ]
+}
+
+Guidelines:
+- Create 3-5 sections
+- Each section should have clear purpose
+- Use Korean language
+- Keep placeholders concrete and helpful`;
+
+    const userPrompt = context
+      ? `User input: ${userInput}\n\nContext: ${context}`
+      : `User input: ${userInput}`;
+
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+        response_format: { type: 'json_object' },
+      });
+
+      const response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error('No response from OpenAI');
+      }
+
+      const parsed = JSON.parse(response);
+      return parsed;
+    } catch (error) {
+      console.error('OpenAI generate structure error:', error);
+      throw new Error('Failed to generate structure with OpenAI');
+    }
   }
 }

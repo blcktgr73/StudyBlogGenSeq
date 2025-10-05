@@ -5,14 +5,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket, Loader2, CheckCircle } from "lucide-react";
+import { Sparkles, Save, Eye, BookOpen, Lightbulb, Rocket, Loader2, CheckCircle, FileText, Wand2 } from "lucide-react";
 import { savePost, getPostById, type Post } from "@/lib/posts";
+import { StructureWizard } from "@/components/StructureWizard";
+import type { StructureGenerationResponse } from "@/lib/ai/types";
 
 function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editPostId = searchParams.get('edit');
 
+  const [startMode, setStartMode] = useState<'select' | 'template' | 'blank' | 'wizard' | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -23,6 +26,7 @@ function WritePageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [wizardStructure, setWizardStructure] = useState<StructureGenerationResponse | null>(null);
 
   // Load post for editing
   useEffect(() => {
@@ -35,6 +39,7 @@ function WritePageContent() {
           setContent(post.content);
           setSuggestedTags(post.tags);
           setSelectedTemplate('learning'); // Default template when editing
+          setStartMode('template'); // Skip mode selection when editing
           if (post.aiSuggestionsUsed) {
             setAiSuggestion('(Previously improved with AI)');
           }
@@ -43,6 +48,18 @@ function WritePageContent() {
     };
     loadPost();
   }, [editPostId]);
+
+  const handleStructureGenerated = (structure: StructureGenerationResponse) => {
+    setWizardStructure(structure);
+    setStartMode('template');
+    setSelectedTemplate('wizard');
+
+    // Auto-populate content with structure template
+    const structureTemplate = structure.sections
+      .map(section => `## ${section.title}\n\n${section.description}\n\n${section.placeholder}\n\n`)
+      .join('');
+    setContent(structureTemplate);
+  };
 
   const templates = [
     {
@@ -197,8 +214,69 @@ function WritePageContent() {
         </p>
       </div>
 
+      {/* Start Mode Selection */}
+      {!startMode && !editingPost && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">어떻게 시작할까요?</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card
+              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300 dark:hover:border-purple-700"
+              onClick={() => setStartMode('template')}
+            >
+              <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center mb-4">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold mb-2">템플릿으로 시작</h3>
+              <p className="text-sm text-muted-foreground">
+                미리 준비된 템플릿을 선택하여 빠르게 시작
+              </p>
+            </Card>
+
+            <Card
+              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300 dark:hover:border-purple-700"
+              onClick={() => {
+                setStartMode('blank');
+                setSelectedTemplate('blank');
+              }}
+            >
+              <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center mb-4">
+                <FileText className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold mb-2">빈 문서로 시작</h3>
+              <p className="text-sm text-muted-foreground">
+                자유로운 형식으로 처음부터 작성
+              </p>
+            </Card>
+
+            <Card
+              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300 dark:hover:border-purple-700 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950"
+              onClick={() => setStartMode('wizard')}
+            >
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 text-white flex items-center justify-center mb-4">
+                <Wand2 className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                AI와 함께 구조 짜기
+                <Badge className="bg-purple-600 text-white text-xs">추천</Badge>
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                AI가 맞춤 구조를 제안하여 체계적으로 작성
+              </p>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Structure Wizard */}
+      {startMode === 'wizard' && !selectedTemplate && (
+        <StructureWizard
+          onStructureGenerated={handleStructureGenerated}
+          onCancel={() => setStartMode(null)}
+        />
+      )}
+
       {/* Template Selection */}
-      {!selectedTemplate && (
+      {startMode === 'template' && !selectedTemplate && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">템플릿 선택</h2>
           <div className="grid gap-4 md:grid-cols-3">
@@ -378,8 +456,12 @@ function WritePageContent() {
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-6 border-t">
-            <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
-              템플릿 다시 선택
+            <Button variant="outline" onClick={() => {
+              setSelectedTemplate(null);
+              setStartMode(null);
+              setWizardStructure(null);
+            }}>
+              처음으로 돌아가기
             </Button>
             <div className="flex gap-2">
               <Button
