@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Send, Loader2, Edit2, Check } from "lucide-react";
+import { Sparkles, Send, Loader2, Edit2, Check, ArrowUp, ArrowDown } from "lucide-react";
 import type { StructureGenerationResponse, StructureSection } from "@/lib/ai/types";
 
 interface StructureWizardProps {
@@ -87,6 +87,42 @@ export function StructureWizard({ onStructureGenerated, onCancel }: StructureWiz
     const updatedSections = generatedStructure.sections
       .filter((_, i) => i !== index)
       .map((section, i) => ({ ...section, order: i + 1 }));
+
+    setGeneratedStructure({
+      ...generatedStructure,
+      sections: updatedSections,
+    });
+  };
+
+  const handleMoveSectionUp = (index: number) => {
+    if (!generatedStructure || index === 0) return;
+
+    const updatedSections = [...generatedStructure.sections];
+    [updatedSections[index - 1], updatedSections[index]] =
+      [updatedSections[index], updatedSections[index - 1]];
+
+    // Update order numbers
+    updatedSections.forEach((section, i) => {
+      section.order = i + 1;
+    });
+
+    setGeneratedStructure({
+      ...generatedStructure,
+      sections: updatedSections,
+    });
+  };
+
+  const handleMoveSectionDown = (index: number) => {
+    if (!generatedStructure || index === generatedStructure.sections.length - 1) return;
+
+    const updatedSections = [...generatedStructure.sections];
+    [updatedSections[index], updatedSections[index + 1]] =
+      [updatedSections[index + 1], updatedSections[index]];
+
+    // Update order numbers
+    updatedSections.forEach((section, i) => {
+      section.order = i + 1;
+    });
 
     setGeneratedStructure({
       ...generatedStructure,
@@ -185,7 +221,7 @@ export function StructureWizard({ onStructureGenerated, onCancel }: StructureWiz
                 <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-300">
                   <span>📝 {generatedStructure.sections.length}개 섹션</span>
                   <span>•</span>
-                  <span>섹션을 클릭하여 수정하거나 추가/제거할 수 있습니다</span>
+                  <span>위/아래 화살표로 순서 변경, 수정/추가/제거 가능</span>
                 </div>
               </div>
             </div>
@@ -252,7 +288,32 @@ export function StructureWizard({ onStructureGenerated, onCancel }: StructureWiz
                   </div>
                 ) : (
                   <div>
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start gap-3 mb-3">
+                      {/* Order controls */}
+                      <div className="flex flex-col gap-1 pt-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleMoveSectionUp(index)}
+                          disabled={index === 0}
+                          className="h-6 w-6 p-0"
+                          title="위로 이동"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleMoveSectionDown(index)}
+                          disabled={index === generatedStructure.sections.length - 1}
+                          className="h-6 w-6 p-0"
+                          title="아래로 이동"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Section content */}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs font-bold">
@@ -270,7 +331,7 @@ export function StructureWizard({ onStructureGenerated, onCancel }: StructureWiz
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-2 mt-3">
+                    <div className="flex gap-2 mt-3 ml-14">
                       <Button
                         size="sm"
                         variant="ghost"
