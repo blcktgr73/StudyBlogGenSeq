@@ -245,7 +245,7 @@ export function StructureWizard({ onStructureGenerated, onCancel }: StructureWiz
                           title: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 text-lg font-semibold border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background"
+                      className="w-full px-3 py-2 text-lg font-semibold border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground"
                     />
                     <textarea
                       value={editedSection?.description || ""}
@@ -255,7 +255,7 @@ export function StructureWizard({ onStructureGenerated, onCancel }: StructureWiz
                           description: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background resize-none"
+                      className="w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground resize-none"
                       rows={2}
                     />
                     <textarea
@@ -266,7 +266,7 @@ export function StructureWizard({ onStructureGenerated, onCancel }: StructureWiz
                           placeholder: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-muted italic resize-none"
+                      className="w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-muted text-muted-foreground italic resize-none"
                       rows={2}
                     />
                     <div className="flex gap-2">
