@@ -266,7 +266,7 @@ export function StructureWizard({ onStructureGenerated, onCancel }: StructureWiz
                           placeholder: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-muted text-muted-foreground italic resize-none"
+                      className="w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground italic resize-none"
                       rows={2}
                     />
                     <div className="flex gap-2">
