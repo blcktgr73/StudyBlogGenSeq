@@ -219,37 +219,9 @@ function WritePageContent() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">어떻게 시작할까요?</h2>
           <div className="grid gap-4 md:grid-cols-3">
+            {/* AI 구조 생성 - 가장 먼저 배치 */}
             <Card
-              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300 dark:hover:border-purple-700"
-              onClick={() => setStartMode('template')}
-            >
-              <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center mb-4">
-                <BookOpen className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold mb-2">템플릿으로 시작</h3>
-              <p className="text-sm text-muted-foreground">
-                미리 준비된 템플릿을 선택하여 빠르게 시작
-              </p>
-            </Card>
-
-            <Card
-              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300 dark:hover:border-purple-700"
-              onClick={() => {
-                setStartMode('blank');
-                setSelectedTemplate('blank');
-              }}
-            >
-              <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold mb-2">빈 문서로 시작</h3>
-              <p className="text-sm text-muted-foreground">
-                자유로운 형식으로 처음부터 작성
-              </p>
-            </Card>
-
-            <Card
-              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300 dark:hover:border-purple-700 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950"
+              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 border-purple-300 dark:border-purple-700 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950"
               onClick={() => setStartMode('wizard')}
             >
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 text-white flex items-center justify-center mb-4">
@@ -261,6 +233,37 @@ function WritePageContent() {
               </h3>
               <p className="text-sm text-muted-foreground">
                 AI가 맞춤 구조를 제안하여 체계적으로 작성
+              </p>
+            </Card>
+
+            {/* 템플릿 선택 */}
+            <Card
+              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-blue-300 dark:hover:border-blue-700"
+              onClick={() => setStartMode('template')}
+            >
+              <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center mb-4">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold mb-2">템플릿으로 시작</h3>
+              <p className="text-sm text-muted-foreground">
+                미리 준비된 템플릿을 선택하여 빠르게 시작
+              </p>
+            </Card>
+
+            {/* 빈 문서 */}
+            <Card
+              className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-gray-300 dark:hover:border-gray-700"
+              onClick={() => {
+                setStartMode('blank');
+                setSelectedTemplate('blank');
+              }}
+            >
+              <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center mb-4">
+                <FileText className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold mb-2">빈 문서로 시작</h3>
+              <p className="text-sm text-muted-foreground">
+                자유로운 형식으로 처음부터 작성
               </p>
             </Card>
           </div>
@@ -278,8 +281,13 @@ function WritePageContent() {
       {/* Template Selection */}
       {startMode === 'template' && !selectedTemplate && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">템플릿 선택</h2>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">템플릿 선택</h2>
+            <Button variant="ghost" onClick={() => setStartMode(null)}>
+              ← 뒤로가기
+            </Button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-4">
             {templates.map((template) => {
               const Icon = template.icon;
               return (
@@ -298,6 +306,20 @@ function WritePageContent() {
                 </Card>
               );
             })}
+
+            {/* 빈 구조 템플릿 추가 */}
+            <Card
+              className="p-6 cursor-pointer hover:shadow-lg transition-shadow border-2 border-dashed"
+              onClick={() => setSelectedTemplate('blank')}
+            >
+              <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center mb-4">
+                <FileText className="h-6 w-6" />
+              </div>
+              <h3 className="font-semibold mb-2">빈 구조</h3>
+              <p className="text-sm text-muted-foreground">
+                자유롭게 작성하기
+              </p>
+            </Card>
           </div>
         </div>
       )}
